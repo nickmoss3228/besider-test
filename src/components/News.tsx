@@ -1,30 +1,28 @@
 import '../App.css'
 import { useEffect, useState } from 'react'
+import Footer from './Footer';
+import type { Article, MultimediaItem, ApiResponse } from '../types/types';
+import {ClipLoader} from 'react-spinners';
 
-type article = {
-    title: string;
+type ErrorMessage = string | null;
 
-}
+type LoadingState = boolean;
 
-// const BASE_URL = 'https://api.nytimes.com/svc/archive/v1'
-const API_KEY = 'qKDYFGMwUv10p4lIGXiNuxhQ0GWkGntd'
+const API_KEY: string = 'qKDYFGMwUv10p4lIGXiNuxhQ0GWkGntd' // my own key
 
 const News = () => {
-    const [newsData, setNewsData] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null) 
+    const [newsData, setNewsData] = useState<Article[]>([])
+    const [loading, setLoading] = useState<LoadingState>(false)
+    const [error, setError] = useState<ErrorMessage>(null) 
 
-    console.log(newsData)
-
-    // const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    // const targetUrl = 'https://api.nytimes.com/svc/archive/v1/2025/5.json?api-key=qKDYFGMwUv10p4lIGXiNuxhQ0GWkGntd';
+    // console.log(newsData)
     
-   const fetchData = async () => {
-        // setLoading(true)
-        // setError(null)
+    const fetchData = async (): Promise<void> => {
+        setLoading(true)
+        setError(null)
         
         try {
-            const response = await fetch(
+            const response: Response = await fetch(
                 `https://api.nytimes.com/svc/topstories/v2/home.json?api-key=${API_KEY}`
             )
 
@@ -35,26 +33,28 @@ const News = () => {
                 throw new Error(`HTTP error! status: ${response.status}`)
             }
             
-            const data = await response.json()
-            const sortedArticles = data.results
+            const data: ApiResponse = await response.json()
+            const sortedArticles: Article[] = data.results
                 .slice(0, 50)
                 .sort((a, b) => {
                     const dateA = new Date(a.published_date)
                     const dateB = new Date(b.published_date)
                     
-                    // Sort in descending order (newest first)
+                    // Sort in descending order
                     return dateB.getTime() - dateA.getTime()
                 })
             
             setNewsData(sortedArticles)
-            console.log('Fetched and sorted data:', sortedArticles)
-    } catch (error) {
-        console.error('Error fetching data:', error)
-    }
+            // console.log('Fetched and sorted data:', sortedArticles)
+        
+        } catch {error }
+            finally {
+            setLoading(false)
+        }
     }
     
-     // Helper function to format date
-    const formatDate = (dateString: string) => {
+     // format the date like in figma
+    const formatDate = (dateString: string): string => {
         const date = new Date(dateString)
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -67,6 +67,12 @@ const News = () => {
 
     useEffect(() => {
         fetchData()
+        const interval = setInterval((): void => {
+            fetchData();
+            // console.log('refetched')
+        }, 30000)
+
+        return ():void => clearInterval(interval)
     }, [])
 
   return (
@@ -74,13 +80,6 @@ const News = () => {
             <div className='max-w-4xl mx-auto'>
                 <div className='flex justify-between items-center mb-6'>
                     <h1 className='text-3xl font-bold'>Latest News</h1>
-                    <button 
-                        onClick={fetchData}
-                        disabled={loading}
-                        className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50'
-                    >
-                        {loading ? 'Loading...' : 'Refresh'}
-                    </button>
                 </div>
 
                 {error && (
@@ -91,7 +90,12 @@ const News = () => {
 
                 {loading && newsData.length === 0 && (
                     <div className='text-center py-8'>
-                        <div className='text-gray-500'>Loading news...</div>
+                      <div className='text-gray-500'>
+                          <ClipLoader
+                            color="#2732c9" 
+                            loading={true} 
+                            size={50} />
+                        </div>
                     </div>
                 )}
 
@@ -103,9 +107,6 @@ const News = () => {
                                     className='w-[120px] h-[90px] object-cover rounded' 
                                     src={article.multimedia?.[0]?.url || 'https://i.ibb.co/RGCDDcHs/0d998bb6b4366e3f47beeadb8b19e6d914e9e43f.png'} 
                                     alt={article.title}
-                                    onError={(e) => {
-                                        e.target.src = 'https://via.placeholder.com/120x90?text=No+Image'
-                                    }}
                                 />
                             </div>
                             
@@ -142,7 +143,8 @@ const News = () => {
                         No news articles found.
                     </div>
                 )}
-            </div>
+          </div>
+          <Footer/>
         </div>
     )
 }
