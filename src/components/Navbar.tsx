@@ -8,12 +8,10 @@ const Navbar = () => {
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
-    console.log('worked')
   };
 
     const handleClose = () => {
     setIsOpen(false);
-    console.log('worked close')
   };
 
   return (

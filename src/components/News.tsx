@@ -1,7 +1,7 @@
 import '../App.css'
 import { useEffect, useState } from 'react'
 import Footer from './Footer';
-import type { Article, MultimediaItem, ApiResponse } from '../types/types';
+import type { Article, ApiResponse } from '../types/types';
 import {ClipLoader} from 'react-spinners';
 
 type ErrorMessage = string | null;
@@ -13,9 +13,7 @@ const API_KEY: string = 'qKDYFGMwUv10p4lIGXiNuxhQ0GWkGntd' // my own key
 const News = () => {
     const [newsData, setNewsData] = useState<Article[]>([])
     const [loading, setLoading] = useState<LoadingState>(false)
-    const [error, setError] = useState<ErrorMessage>(null) 
-
-    // console.log(newsData)
+    const [error, setError] = useState<ErrorMessage>('Error!') 
     
     const fetchData = async (): Promise<void> => {
         setLoading(true)
@@ -47,8 +45,9 @@ const News = () => {
             setNewsData(sortedArticles)
             // console.log('Fetched and sorted data:', sortedArticles)
         
-        } catch {error }
-            finally {
+        } catch (error) {
+            console.error('Error fetching data:', error)
+        } finally {
             setLoading(false)
         }
     }
